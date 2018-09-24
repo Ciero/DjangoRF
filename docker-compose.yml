@@ -1,0 +1,46 @@
+version: '3'
+services:
+  email:
+    image: registry.gitlab.propulsion-home.ch/full-stack/batch-2018-06/personal-projects/serviceswap:latest
+    env_file:
+      - dev.env
+    volumes:
+      - ./app:/app
+      - ./scripts:/scripts
+      - ./media-files:/media-files
+      - ./static-files:/static-files
+    command: 'python manage.py send_mail'
+    depends_on:
+      - postgres
+
+  app:
+    image: registry.gitlab.propulsion-home.ch/full-stack/batch-2018-06/personal-projects/serviceswap:latest
+    ports:
+      - "8000:8000"  # For nginx
+      - "4777:22"  # local computer - > SSH -> docker container.
+    env_file:
+      - dev.env
+    volumes:
+      - ./app:/app
+      - ./scripts:/scripts
+      - ./media-files:/media-files
+      - ./static-files:/static-files
+    command: "/usr/sbin/sshd -D"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: user01
+      POSTGRES_DATABASE: postgres
+#    ports:
+#      - '5432:5432'
+
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+
+volumes:
+  postgres:

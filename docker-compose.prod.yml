@@ -1,0 +1,51 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /etc/ssl/certs:/etc/ssl/certs
+      - media-files:/media-files
+      - static-files:/static-files
+      - frontend:/frontend
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: example
+      POSTGRES_USER: user01
+      POSTGRES_DATABASE: postgres
+    volumes:
+      - postgres:/var/lib/postgresql/data
+
+  email:
+    image: "${CI_REGISTRY_IMAGE}:latest"
+    command: 'sh /scripts/run_email.sh'
+    depends_on:
+      - postgres
+
+  app:
+    image: "${CI_REGISTRY_IMAGE}:latest"
+    ports:
+      - "8000:8000"  # For nginx
+    env_file:
+      - prod.env
+    volumes:
+      - media-files:/media-files
+      - static-files:/static-files
+      - frontend:/frontend-build
+    command: "sh /scripts/run.sh"
+    depends_on:
+      - postgres
+
+
+volumes:
+  postgres:
+  media-files:
+  static-files:
+  frontend:

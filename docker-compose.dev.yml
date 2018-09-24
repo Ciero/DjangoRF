@@ -1,0 +1,49 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx:/etc/nginx/conf.d
+
+  # postgres:
+  #   image: postgres:latest
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     POSTGRES_USER: postgres
+  #     POSTGRES_DATABASE: postgres
+  #     POSTGRES_PASSWORD: postgres
+  #   volumes:
+  #     - postgres:/var/lib/postgresql/data
+
+  email:
+    image: "${CI_REGISTRY_IMAGE}:latest"
+    volumes:
+      - ./app:/app
+      - ./scripts:/scripts
+      - ./media-files:/media-files
+      - ./static-files:/static-files
+    command: 'python manage.py send_mail'
+#    depends_on:
+#      - postgres
+
+  app:
+    image: "${CI_REGISTRY_IMAGE}:latest"
+    ports:
+      - "8000:8000"  # For nginx
+      - "4777:22"  # local computer - > SSH -> docker container.
+    env_file:
+      - dev.env
+    volumes:
+      - ./app:/app
+      - ./scripts:/scripts
+      - ./media-files:/media-files
+      - ./static-files:/static-files
+    command: "/usr/sbin/sshd -D"
+#     depends_on:
+#       - postgres
+
+# volumes:
+#   postgres:
